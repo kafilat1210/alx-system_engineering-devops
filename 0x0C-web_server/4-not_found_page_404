@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-# Customising 404-error page
+# Install nginx and configure a custom 404 error page
 
+# Update the package list and install Nginx
 sudo apt-get update
-sudo apt-get install -y nginx
+sudo apt-get install nginx -y
 
-echo "Hello World!" | sudo tee /var/www/html/index.html
+# Create a custom 404 error page
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
 
-new_string="server_name_;\n\trewrite ^/redirect_me https://www.youtube.com/shorts/WoBCiqoOBQA permanent;"sudo sed -i "s/server_name _;/$new_string/" /etc/nginx/sites-available/default
+# Configure Nginx to use the custom 404 page
+sudo sed -i '/server_name _;/a \ \n\terror_page 404 /404.html;' /etc/nginx/sites-available/default
 
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/error_404.html
-new_string="listen 80 default_server;\n\terror_page 404 \/404.html;\n\ location = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
+# Ensure there's no duplication in redirections (the following line checks for existing redirections)
+sudo sed -i '/redirect_me/d' /etc/nginx/sites-available/default
 
-sudo sed -i "s/listen 80 default_server;/$new_string/" /etc/nginx/sites-available/default
+# Test the Nginx configuration for errors
+sudo nginx -t
 
-sudo service nginx start
+# Restart Nginx to apply changes if configuration is correct
+if sudo nginx -t; then
+    sudo service nginx restart
+else
+    echo "Nginx configuration failed"
+fi
