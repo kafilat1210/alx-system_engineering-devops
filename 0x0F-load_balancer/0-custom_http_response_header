@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Install nginx and configure a custom response header
+
+# Update the package list and install Nginx
+sudo apt-get update
+sudo apt-get install nginx -y
+
+# Get the hostname of the current server
+hostname=$(hostname)
+
+# Backup the original Nginx configuration file
+sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+
+# Configure Nginx to add the custom header
+# This assumes a default server block configuration
+sudo sed -i "/server_name _;/a \ \n\tadd_header X-Served-By $hostname;" /etc/nginx/sites-available/default
+
+# Test the Nginx configuration for errors
+sudo nginx -t
+
+# Restart Nginx to apply changes if configuration is correct
+if sudo nginx -t; then
+    sudo service nginx restart
+else
+    echo "Nginx configuration failed"
+fi
